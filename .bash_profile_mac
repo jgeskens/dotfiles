@@ -1,0 +1,85 @@
+export WORKON_HOME=/Users/jef/env
+. virtualenvwrapper.sh
+
+#export DYLD_LIBRARY_PATH=/usr/local/mysql/lib/:$DYLD_LIBRARY_PATH
+export LC_CTYPE=en_US.UTF-8
+export PATH="/Applications/Postgres.app/Contents/MacOS/bin:$PATH"
+export PATH=$PATH:/usr/local/mysql/bin/
+export PATH=$PATH:/usr/local/bin/
+export PATH=$PATH:/Users/jef/bin/:$HOME/.local/bin
+export PATH=$PATH:$HOME/Library/Haskell/bin
+export PATH="~/.tmuxifier/bin:$PATH"
+export CFLAGS=-Qunused-arguments
+export CPPFLAGS=-Qunused-arguments
+
+. git-completion.bash
+
+EMSDK_PATH="$(/Users/jef/emsdk_portable/emsdk active_path)"
+export PATH=$PATH:$EMSDK_PATH
+
+alias rw='/Users/jef/git/requirementswrangler/rw.py /Users/jef/git/mvne-platform/deployment/requirements.txt'
+alias rwsync='/Users/jef/git/requirementswrangler/rw.py sync /Users/jef/git/mvne-platform/deployment/requirements.txt'
+alias rwsynci='/Users/jef/git/requirementswrangler/rw.py sync -i /Users/jef/git/mvne-platform/deployment/requirements.txt'
+alias rw_poland='/Users/jef/git/requirementswrangler/rw.py /Users/jef/git/mv-poland/deployment/requirements/base.txt'
+alias rwsync_poland='/Users/jef/git/requirementswrangler/rw.py sync /Users/jef/git/mv-poland/deployment/requirements/base.txt'
+alias rwsynci_poland='/Users/jef/git/requirementswrangler/rw.py sync -i /Users/jef/git/mv-poland/deployment/requirements/base.txt'
+
+killserver() {
+    for pid in `ps aux | grep $1 | awk '{print $2}'`; do kill -9 $pid; done
+}
+
+pip-install-diff-origin-master() {
+    git fetch origin
+    git diff origin/master $1 | grep "^\+" | sed 's/## develop//g' | sed 's/## auto-update//g' | sed 's/^\+//g' | sed 's/^\+\+.*$//g' | while read line; do pip install $line; done
+}
+
+serve() {
+    { echo -ne "HTTP/1.0 200 OK\r\n\r\n"; cat "$1"; } | nc -l $2
+}
+
+serve_dir() {
+    python -m SimpleHTTPServer $1
+}
+
+git_log_since_version() {
+    git log --oneline $1...HEAD --graph --pretty=format:'`%h <https://github.com/vikingco/django-advanced-reports/commit/%h>`_ %s <%an>'
+}
+
+docker_delete_stopped_containers() {
+    docker rm -v `docker ps -a -q -f status=exited`
+}
+
+mactox() {
+    LDFLAGS="-L$(brew --prefix openssl)/lib" CFLAGS="-I$(brew --prefix openssl)/include" CC=gcc tox $@
+}
+
+macpip() {
+    LDFLAGS="-L$(brew --prefix openssl)/lib" CFLAGS="-I$(brew --prefix openssl)/include" CC=gcc pip $@
+}
+
+test_mvne() {
+    TESTS_MEMORY_DB=True mvno/mobile_vikings/manage_be.py test $@ --settings=mobile_vikings.settings_test_circleci
+}
+
+test_mobilife() {
+    mobilife/manage.py test $@ --settings=mobilife.settings_test
+}
+
+watch() {
+    while true; do sleep 2; clear; date; $@; done
+}
+
+
+# Setting PATH for Python 3.4
+# The orginal version is saved in .bash_profile.pysave
+PATH="/Library/Frameworks/Python.framework/Versions/3.4/bin:${PATH}"
+export PATH
+if [ -e /Users/jef/.nix-profile/etc/profile.d/nix.sh ]; then . /Users/jef/.nix-profile/etc/profile.d/nix.sh; fi # added by Nix installer
+
+docker_tunnel() {
+    socat TCP-LISTEN:2376,reuseaddr,fork UNIX-CLIENT:/var/run/docker.sock
+}
+
+dcrun() {
+    docker-compose run --rm $@
+}
